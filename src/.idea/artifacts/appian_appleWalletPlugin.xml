@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="appian-appleWalletPlugin">
+    <output-path>$PROJECT_DIR$/out/artifacts/appian_appleWalletPlugin</output-path>
+    <root id="archive" name="appian-appleWalletPlugin.jar">
+      <element id="module-output" name="appian-appleWalletPlugin" />
+      <element id="dir-copy" path="$PROJECT_DIR$/jar_root" />
+    </root>
+  </artifact>
+</component>

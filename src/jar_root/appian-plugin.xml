@@ -1,0 +1,32 @@
+<appian-plugin name="Apple Wallet Plugin" key="com.robmunroe.plugin.appleWallet">
+
+    <plugin-info>
+        <description>Provides the ability to create, sign, and compress passes that can be imported into Apple Wallet
+        </description>
+        <vendor name="Appian Corporation" url="http://www.appian.com"/>
+        <version>1.0.0</version>
+        <application-version min="20.2"/>
+    </plugin-info>
+
+    <function-category key="AppleWalletCategory" name="Apple Wallet"/>
+
+    <datatype key="appleWalletDatatypes" name="Apple Wallet Data Types">
+        <class>com.robmunroe.plugin.appleWallet.dataTypes.GenericPass</class>
+        <class>com.robmunroe.plugin.appleWallet.dataTypes.PassBarcode</class>
+        <class>com.robmunroe.plugin.appleWallet.dataTypes.PassLocation</class>
+        <class>com.robmunroe.plugin.appleWallet.dataTypes.PassImages</class>
+    </datatype>
+
+    <smart-service name="Create Generic Pass Smart Service"
+                   key="CreateGenericPassSmartService_1"
+                   class="com.robmunroe.plugin.appleWallet.smartServices.CreateGenericPassSmartService"/>
+
+    <function key="AwpGetUuid"
+              class="com.robmunroe.plugin.appleWallet.expressions.AwpGetUuid" />
+
+    <servlet name="Download Pass Servlet" key="downloadPassServlet" class="com.robmunroe.plugin.appleWallet.servlet.DownloadPassServlet">
+        <description>Download Pass Servlet</description>
+        <url-pattern>/downloadPass</url-pattern>
+    </servlet>
+
+</appian-plugin>
