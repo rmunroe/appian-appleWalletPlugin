@@ -65,54 +65,52 @@ public class CreatePassSmartService extends AppianSmartService {
                     AppleWalletPluginHelper.PASS_EXTENSION
             );
             // Get an OutputStream for the new Document
-            ContentOutputStream outputStream = AppleWalletPluginHelper.uploadDocumentForWriting(
-                    this.contentService,
-                    outputDocument
-            );
+            try (ContentOutputStream outputStream = AppleWalletPluginHelper.uploadDocumentForWriting(this.contentService, outputDocument)) {
 
-            // Get the path to the Apple WWDRCA file
-            String appleWWDRCAPath = AppleWalletPluginHelper.getPhysicalFilePath(
-                    this.contentService,
-                    this.appleWWDRCA
-            );
-
-            // Get the path to the private key
-            String privateKeyPath = AppleWalletPluginHelper.getPhysicalFilePath(
-                    this.contentService,
-                    this.privateKey
-            );
-
-            // Get the password from the Secure Credential Store
-            String privateKeyPassword = scs
-                    .getSystemSecuredValues(this.passwordScsKey)
-                    .get("password");
-
-            PKInMemorySigningUtil signingUtil = new PKInMemorySigningUtil();
-            PKSigningInformationUtil PKSigningInformationUtil = new PKSigningInformationUtil();
-
-            PKSigningInformation pkSigningInformation = PKSigningInformationUtil
-                    .loadSigningInformationFromPKCS12AndIntermediateCertificate(
-                            privateKeyPath, privateKeyPassword, appleWWDRCAPath
-                    );
-
-            PKPass pass = passType.getPass();
-
-            if (pass.isValid()) {
-                byte[] passZipAsByteArray = signingUtil.createSignedAndZippedPkPassArchive(
-                        pass,
-                        addImages(new PKPassTemplateInMemory()),
-                        pkSigningInformation
+                // Get the path to the Apple WWDRCA file
+                String appleWWDRCAPath = AppleWalletPluginHelper.getPhysicalFilePath(
+                        this.contentService,
+                        this.appleWWDRCA
                 );
 
-                IOUtils.copy(new ByteArrayInputStream(passZipAsByteArray), outputStream);
+                // Get the path to the private key
+                String privateKeyPath = AppleWalletPluginHelper.getPhysicalFilePath(
+                        this.contentService,
+                        this.privateKey
+                );
 
-                this.outputFile = outputStream.getContentId();
-                outputStream.close();
-            } else {
-                this.errorOccurred = true;
-                this.errorTxt = "The provided arguments did not produce a valid Pass: " +
-                        String.join("; ", pass.getValidationErrors());
+                // Get the password from the Secure Credential Store
+                String privateKeyPassword = scs
+                        .getSystemSecuredValues(this.passwordScsKey)
+                        .get("password");
+
+                PKInMemorySigningUtil signingUtil = new PKInMemorySigningUtil();
+                PKSigningInformationUtil PKSigningInformationUtil = new PKSigningInformationUtil();
+
+                PKSigningInformation pkSigningInformation = PKSigningInformationUtil
+                        .loadSigningInformationFromPKCS12AndIntermediateCertificate(
+                                privateKeyPath, privateKeyPassword, appleWWDRCAPath
+                        );
+
+                PKPass pass = passType.getPass();
+
+                if (pass.isValid()) {
+                    byte[] passZipAsByteArray = signingUtil.createSignedAndZippedPkPassArchive(
+                            pass,
+                            addImages(new PKPassTemplateInMemory()),
+                            pkSigningInformation
+                    );
+
+                    IOUtils.copy(new ByteArrayInputStream(passZipAsByteArray), outputStream);
+
+                    this.outputFile = outputStream.getContentId();
+                } else {
+                    this.errorOccurred = true;
+                    this.errorTxt = "The provided arguments did not produce a valid Pass: " +
+                            String.join("; ", pass.getValidationErrors());
+                }
             }
+
         } catch (Exception e) {
             LOG.error(e.getMessage());
             errorOccurred = true;
