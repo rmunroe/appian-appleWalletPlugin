@@ -41,6 +41,8 @@ public class PassHelper {
 
 
     public static List<PKBarcode> buildBarcodes(List<PassBarcode> barcodes) {
+        if (barcodes == null) return null;
+
         List<PKBarcode> pkBarcodes = new ArrayList<>();
 
         for (PassBarcode barcode : barcodes) {
@@ -56,7 +58,9 @@ public class PassHelper {
 
 
     public static List<PKLocation> buildLocations(List<PassLocation> locations) {
-        List<PKLocation> pkLocations = new ArrayList<>();
+      if (locations == null) return null;
+
+      List<PKLocation> pkLocations = new ArrayList<>();
 
         for (PassLocation location : locations) {
             PKLocation pkLocation = new PKLocation();

@@ -114,7 +114,7 @@ public class CreatePassSmartService extends AppianSmartService {
         } catch (Exception e) {
             LOG.error(e.getMessage());
             errorOccurred = true;
-            errorTxt = e.getMessage();
+            errorTxt = "The provided arguments did not produce a valid Pass: " + e.getLocalizedMessage();
         }
     }
 

@@ -173,20 +173,30 @@ public class GenericPass implements PassType {
 
         PKGenericPass generic = new PKGenericPass();
 
-        List<PKField> headerFields = PassHelper.fieldsJsonToPKFields(getHeaderFieldsJson());
-        generic.setHeaderFields(headerFields);
+        if (StringUtils.isNotEmpty(getHeaderFieldsJson())) {
+          List<PKField> headerFields = PassHelper.fieldsJsonToPKFields(getHeaderFieldsJson());
+          generic.setHeaderFields(headerFields);
+        }
 
-        List<PKField> primaryFields = PassHelper.fieldsJsonToPKFields(getPrimaryFieldsJson());
-        generic.setPrimaryFields(primaryFields);
+        if (StringUtils.isNotEmpty(getPrimaryFieldsJson())) {
+          List<PKField> primaryFields = PassHelper.fieldsJsonToPKFields(getPrimaryFieldsJson());
+          generic.setPrimaryFields(primaryFields);
+        }
 
-        List<PKField> secondaryFields = PassHelper.fieldsJsonToPKFields(getSecondaryFieldsJson());
-        generic.setSecondaryFields(secondaryFields);
+        if (StringUtils.isNotEmpty(getSecondaryFieldsJson())) {
+          List<PKField> secondaryFields = PassHelper.fieldsJsonToPKFields(getSecondaryFieldsJson());
+          generic.setSecondaryFields(secondaryFields);
+        }
 
-        List<PKField> auxiliaryFields = PassHelper.fieldsJsonToPKFields(getAuxiliaryFieldsJson());
-        generic.setAuxiliaryFields(auxiliaryFields);
+        if (StringUtils.isNotEmpty(getAuxiliaryFieldsJson())) {
+          List<PKField> auxiliaryFields = PassHelper.fieldsJsonToPKFields(getAuxiliaryFieldsJson());
+          generic.setAuxiliaryFields(auxiliaryFields);
+        }
 
-        List<PKField> backFields = PassHelper.fieldsJsonToPKFields(getBackFieldsJson());
-        generic.setBackFields(backFields);
+        if (StringUtils.isNotEmpty(getBackFieldsJson())) {
+          List<PKField> backFields = PassHelper.fieldsJsonToPKFields(getBackFieldsJson());
+          generic.setBackFields(backFields);
+        }
 
         pass.setGeneric(generic);
 
