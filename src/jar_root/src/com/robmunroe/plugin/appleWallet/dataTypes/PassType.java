@@ -1,7 +1,7 @@
 package com.robmunroe.plugin.appleWallet.dataTypes;
 
-import de.brendamour.jpasskit.PKPass;
+import de.brendamour.jpasskit.PKPassBuilder;
 
 public interface PassType {
-    PKPass getPass();
+    PKPassBuilder getPassBuilder();
 }

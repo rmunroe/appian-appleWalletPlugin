@@ -2,11 +2,9 @@ package com.robmunroe.plugin.appleWallet.dataTypes;
 
 import com.robmunroe.plugin.appleWallet.helpers.AppleWalletPluginHelper;
 import com.robmunroe.plugin.appleWallet.helpers.PassHelper;
-import de.brendamour.jpasskit.PKBarcode;
-import de.brendamour.jpasskit.PKField;
-import de.brendamour.jpasskit.PKLocation;
-import de.brendamour.jpasskit.PKPass;
+import de.brendamour.jpasskit.*;
 import de.brendamour.jpasskit.passes.PKGenericPass;
+import de.brendamour.jpasskit.passes.PKGenericPassBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -138,69 +136,69 @@ public class GenericPass implements PassType {
 
 
     @Override
-    public PKPass getPass() {
-        PKPass pass = new PKPass();
-        pass.setPassTypeIdentifier(getPassTypeIdentifier());
-        pass.setSerialNumber(getSerialNumber());
-        pass.setTeamIdentifier(getTeamIdentifier());
-        pass.setOrganizationName(getOrganizationName());
-        pass.setDescription(getDescription());
-        pass.setLogoText(getLogoText());
+    public PKPassBuilder getPassBuilder() {
+        PKPassBuilder builder = PKPass.builder()
+                .passTypeIdentifier(getPassTypeIdentifier())
+                .serialNumber(getSerialNumber())
+                .teamIdentifier(getTeamIdentifier())
+                .organizationName(getOrganizationName())
+                .description(getDescription())
+                .logoText(getLogoText())
+                .maxDistance(getMaxDistance())
+                .relevantDate(getRelevantDate().toInstant())
+                .expirationDate(getExpirationDate().toInstant())
+                .voided(getVoided())
+                .sharingProhibited(getSharingProhibited());
 
         if (StringUtils.isNotEmpty(getAuthenticationToken()))
-            pass.setAuthenticationToken(getAuthenticationToken());
+            builder.authenticationToken(getAuthenticationToken());
 
         if (StringUtils.isNotEmpty(getForegroundColor()))
-            pass.setForegroundColorAsObject(Color.decode(getForegroundColor()));
+            builder.foregroundColor(Color.decode(getForegroundColor()));
 
         if (StringUtils.isNotEmpty(getBackgroundColor()))
-            pass.setBackgroundColorAsObject(Color.decode(getBackgroundColor()));
+            builder.backgroundColor(Color.decode(getBackgroundColor()));
 
         if (StringUtils.isNotEmpty(getLabelColor()))
-            pass.setLabelColorAsObject(Color.decode(getLabelColor()));
+            builder.labelColor(Color.decode(getLabelColor()));
 
-        pass.setMaxDistance(getMaxDistance());
-        pass.setRelevantDate(getRelevantDate());
-        pass.setExpirationDate(getExpirationDate());
-        pass.setVoided(getVoided());
-        pass.setSharingProhibited(getSharingProhibited());
 
         List<PKBarcode> barcodes = PassHelper.buildBarcodes(getBarcodes());
-        pass.setBarcodes(barcodes);
+        builder.barcodes(barcodes);
 
         List<PKLocation> locations = PassHelper.buildLocations(getLocations());
-        pass.setLocations(locations);
+        builder.locations(locations);
 
-        PKGenericPass generic = new PKGenericPass();
+        PKGenericPassBuilder genericBuilder = PKGenericPass.builder();
 
         if (StringUtils.isNotEmpty(getHeaderFieldsJson())) {
           List<PKField> headerFields = PassHelper.fieldsJsonToPKFields(getHeaderFieldsJson());
-          generic.setHeaderFields(headerFields);
+          genericBuilder.headerFields(headerFields);
         }
 
         if (StringUtils.isNotEmpty(getPrimaryFieldsJson())) {
           List<PKField> primaryFields = PassHelper.fieldsJsonToPKFields(getPrimaryFieldsJson());
-          generic.setPrimaryFields(primaryFields);
+          genericBuilder.primaryFields(primaryFields);
         }
 
         if (StringUtils.isNotEmpty(getSecondaryFieldsJson())) {
           List<PKField> secondaryFields = PassHelper.fieldsJsonToPKFields(getSecondaryFieldsJson());
-          generic.setSecondaryFields(secondaryFields);
+          genericBuilder.secondaryFields(secondaryFields);
         }
 
         if (StringUtils.isNotEmpty(getAuxiliaryFieldsJson())) {
           List<PKField> auxiliaryFields = PassHelper.fieldsJsonToPKFields(getAuxiliaryFieldsJson());
-          generic.setAuxiliaryFields(auxiliaryFields);
+          genericBuilder.auxiliaryFields(auxiliaryFields);
         }
 
         if (StringUtils.isNotEmpty(getBackFieldsJson())) {
           List<PKField> backFields = PassHelper.fieldsJsonToPKFields(getBackFieldsJson());
-          generic.setBackFields(backFields);
+          genericBuilder.backFields(backFields);
         }
 
-        pass.setGeneric(generic);
+        builder.pass(genericBuilder.build());
 
-        return pass;
+        return builder;
     }
 
 

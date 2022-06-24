@@ -10,11 +10,11 @@ import com.appiancorp.suiteapi.process.palette.PaletteInfo;
 import com.appiancorp.suiteapi.security.external.SecureCredentialsStore;
 import com.robmunroe.plugin.appleWallet.dataTypes.GenericPass;
 import com.robmunroe.plugin.appleWallet.helpers.AppleWalletPluginHelper;
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 
 @PaletteInfo(paletteCategory = AppleWalletPluginHelper.SMARTSERVICE_PALLETCATEGORY, palette = AppleWalletPluginHelper.SMARTSERVICE_PALLET)
 public class CreateGenericPassSmartService extends CreatePassSmartService {
-    private static final Logger LOG = Logger.getLogger(CreateGenericPassSmartService.class);
+//    private static final Logger LOG = Logger.getLogger(CreateGenericPassSmartService.class);
 
     // GenericPass CDT
     private GenericPass genericPass;

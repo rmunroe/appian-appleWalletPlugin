@@ -74,7 +74,7 @@ public class AppleWalletPluginHelper {
      * methods found in java.io.* and other libraries that use this standard.
      *
      * @param contentService the Appian injected ContentService instance
-     * @param documentId     the Long ID of a valid Document
+     * @param document       a valid Document
      * @return
      * @throws Exception
      */

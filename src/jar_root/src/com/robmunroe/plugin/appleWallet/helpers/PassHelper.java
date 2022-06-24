@@ -10,7 +10,6 @@ import de.brendamour.jpasskit.PKField;
 import de.brendamour.jpasskit.PKLocation;
 import de.brendamour.jpasskit.enums.PKBarcodeFormat;
 
-import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,15 +22,16 @@ public class PassHelper {
         Gson gson = new Gson();
         List<Map<String, Object>> fieldMaps = gson.fromJson(fieldsJson, new TypeToken<ArrayList<Map<String, Object>>>(){}.getType());
         for (Map<String, Object> fieldMap : fieldMaps) {
-            PKField field = new PKField();
-            field.setKey((String) fieldMap.get("key"));
-            field.setLabel((String) fieldMap.get("label"));
-
             Object value = fieldMap.get("value");
             if (value instanceof LinkedTreeMap) {
                 value = ((Map<String, Object>)fieldMap.get("value")).get("id");
             }
-            field.setValue((Serializable) value);
+
+            PKField field = PKField.builder()
+                    .key((String) fieldMap.get("key"))
+                    .label((String) fieldMap.get("label"))
+                    .value(String.valueOf(value))
+                    .build();
 
             fields.add(field);
         }
@@ -46,10 +46,12 @@ public class PassHelper {
         List<PKBarcode> pkBarcodes = new ArrayList<>();
 
         for (PassBarcode barcode : barcodes) {
-            PKBarcode pkBarcode = new PKBarcode();
-            pkBarcode.setFormat(PKBarcodeFormat.valueOf(barcode.getFormat()));
-            pkBarcode.setMessageEncoding(Charset.forName(barcode.getMessageEncoding()));
-            pkBarcode.setMessage(barcode.getMessage());
+            PKBarcode pkBarcode = PKBarcode.builder()
+                    .format((PKBarcodeFormat.valueOf(barcode.getFormat())))
+                    .messageEncoding(Charset.forName(barcode.getMessageEncoding()))
+                    .message(barcode.getMessage())
+                    .build();
+
             pkBarcodes.add(pkBarcode);
         }
 
@@ -63,12 +65,12 @@ public class PassHelper {
       List<PKLocation> pkLocations = new ArrayList<>();
 
         for (PassLocation location : locations) {
-            PKLocation pkLocation = new PKLocation();
-
-            pkLocation.setAltitude(location.getAltitude());
-            pkLocation.setLatitude(location.getLatitude());
-            pkLocation.setLongitude(location.getLongitude());
-            pkLocation.setRelevantText(location.getRelevantText());
+            PKLocation pkLocation = PKLocation.builder()
+                    .altitude(location.getAltitude())
+                    .latitude(location.getLatitude())
+                    .longitude(location.getLongitude())
+                    .relevantText(location.getRelevantText())
+                    .build();
 
             pkLocations.add(pkLocation);
         }

@@ -17,20 +17,20 @@ import com.robmunroe.plugin.appleWallet.dataTypes.PassImages;
 import com.robmunroe.plugin.appleWallet.dataTypes.PassType;
 import com.robmunroe.plugin.appleWallet.helpers.AppleWalletPluginHelper;
 import com.robmunroe.plugin.appleWallet.helpers.ContentHelper;
-import de.brendamour.jpasskit.PKPass;
+import de.brendamour.jpasskit.PKPassBuilder;
 import de.brendamour.jpasskit.signing.PKInMemorySigningUtil;
 import de.brendamour.jpasskit.signing.PKPassTemplateInMemory;
 import de.brendamour.jpasskit.signing.PKSigningInformation;
 import de.brendamour.jpasskit.signing.PKSigningInformationUtil;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
 public class CreatePassSmartService extends AppianSmartService {
-    private static final Logger LOG = Logger.getLogger(CreatePassSmartService.class);
+//    private static final Logger LOG = Logger.getLogger(CreatePassSmartService.class);
 
     private final SecureCredentialsStore scs;
     private final ContentService contentService;
@@ -92,11 +92,11 @@ public class CreatePassSmartService extends AppianSmartService {
                                 privateKeyPath, privateKeyPassword, appleWWDRCAPath
                         );
 
-                PKPass pass = passType.getPass();
+                PKPassBuilder passBuilder = passType.getPassBuilder();
 
-                if (pass.isValid()) {
+                if (passBuilder.isValid()) {
                     byte[] passZipAsByteArray = signingUtil.createSignedAndZippedPkPassArchive(
-                            pass,
+                            passBuilder.build(),
                             addImages(new PKPassTemplateInMemory()),
                             pkSigningInformation
                     );
@@ -107,12 +107,12 @@ public class CreatePassSmartService extends AppianSmartService {
                 } else {
                     this.errorOccurred = true;
                     this.errorTxt = "The provided arguments did not produce a valid Pass: " +
-                            String.join("; ", pass.getValidationErrors());
+                            String.join("; ", passBuilder.getValidationErrors());
                 }
             }
 
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+//            LOG.error(e.getMessage());
             errorOccurred = true;
             errorTxt = "The provided arguments did not produce a valid Pass: " + e.getLocalizedMessage();
         }

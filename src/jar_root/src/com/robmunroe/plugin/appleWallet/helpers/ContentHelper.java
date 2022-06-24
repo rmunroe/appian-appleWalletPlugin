@@ -12,14 +12,14 @@ import com.appiancorp.suiteapi.content.exceptions.InvalidContentException;
 import com.appiancorp.suiteapi.content.exceptions.InvalidTypeMaskException;
 import com.appiancorp.suiteapi.knowledge.Document;
 import com.appiancorp.suiteapi.knowledge.KnowledgeFolder;
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 
 /**
  * Class with helper functions.
  */
 public class ContentHelper {
 
-    private static final Logger LOG = Logger.getLogger(ContentHelper.class);
+//    private static final Logger LOG = Logger.getLogger(ContentHelper.class);
 
 
     /**
@@ -58,7 +58,7 @@ public class ContentHelper {
                 return folderId;
             }
         } catch (InvalidContentException | StorageLimitException | PrivilegeException | InsufficientNameUniquenessException | DuplicateUuidException e) {
-            LOG.error(e.getMessage());
+//            LOG.error(e.getMessage());
             e.printStackTrace();
         }
 
@@ -93,7 +93,7 @@ public class ContentHelper {
                     return child.getId(); // Found an existing folder with this name, return it
 
         } catch (InvalidContentException | InvalidTypeMaskException e) {
-            LOG.error(e.getMessage());
+//            LOG.error(e.getMessage());
             e.printStackTrace();
         }
 
@@ -134,7 +134,7 @@ public class ContentHelper {
             }
 
         } catch (InvalidContentException | InvalidTypeMaskException e) {
-            LOG.error(e.getMessage());
+//            LOG.error(e.getMessage());
             e.printStackTrace();
         }
 
@@ -173,7 +173,7 @@ public class ContentHelper {
             Content content = contentService.getVersion(documentId, ContentConstants.VERSION_CURRENT);
             return content.getUuid();
         } catch (InvalidContentException | InvalidVersionException | PrivilegeException e) {
-            LOG.error(e.getMessage());
+//            LOG.error(e.getMessage());
         }
         return null;
     }

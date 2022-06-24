@@ -8,18 +8,17 @@ import com.appiancorp.suiteapi.common.exceptions.AppianException;
 import com.appiancorp.suiteapi.content.ContentService;
 import com.appiancorp.suiteapi.servlet.AppianServlet;
 import com.robmunroe.plugin.appleWallet.helpers.ContentHelper;
-import org.apache.log4j.Logger;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 public class DownloadPassServlet extends AppianServlet {
-    private static final Logger LOG = Logger.getLogger(DownloadPassServlet.class);
+//    private static final Logger LOG = Logger.getLogger(DownloadPassServlet.class);
 
     private static final String PASS_CONTENT_TYPE = "application/vnd.apple.pkpass";
     private static final String DOC_ID_PARAM = "id";
@@ -44,7 +43,7 @@ public class DownloadPassServlet extends AppianServlet {
 
         try (
                 ServletOutputStream output = resp.getOutputStream();
-                InputStream input = new FileInputStream(file)
+                InputStream input = Files.newInputStream(file.toPath())
         ) {
             // transfer input stream to output stream, via a buffer
             byte[] buffer = new byte[2048];
