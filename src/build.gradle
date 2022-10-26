@@ -1,35 +1,39 @@
 plugins {
-  id 'java-library'
-  id "org.owasp.dependencycheck" version "7.1.1"
+  id 'java'
+  id 'groovy'
+  id 'org.owasp.dependencycheck' version '7.1.2'
 }
+
 
 group 'com.robmunroe.plugin.appleWallet'
 version '1.0.5'
+
 
 repositories {
   mavenCentral()
   maven {
     url "https://oss.sonatype.org/content/repositories/snapshots/"
   }
+  flatDir {
+    dirs 'lib-compile'
+  }
 }
-
 
 dependencies {
   compileOnly fileTree(dir: 'dependencies/lib-compile', include: '*.jar')
   implementation fileTree(dir: 'jar_root/META-INF/lib', include: '*.jar')
 
-  //  implementation "de.brendamour:jpasskit:0.2.1-SNAPSHOT"
-
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
-  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4'
   implementation 'com.google.code.gson:gson:2.9.0'
   implementation 'com.google.guava:guava:31.1-jre'
   implementation 'commons-codec:commons-codec:1.15'
   implementation 'commons-io:commons-io:2.11.0'
   implementation 'org.apache.commons:commons-lang3:3.12.0'
   implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
-  implementation 'org.slf4j:slf4j-api:1.7.36'
+  implementation 'org.slf4j:slf4j-api:2.0.3'
 }
+
 
 sourceSets {
   main {
@@ -43,15 +47,36 @@ sourceSets {
 }
 
 
+configurations {
+  implementation.transitive = false
+}
+
+
 jar {
-  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  dependsOn check
+  duplicatesStrategy = DuplicatesStrategy.FAIL
+
+  configurations.implementation.setCanBeResolved(true)
+
   into('META-INF/lib') {
-    from(configurations.runtimeClasspath)
+    from(configurations.implementation)
+  }
+
+  into('src') {
+    from(sourceSets.main.allJava)
   }
 
   manifest {
     attributes("Spring-Context": "*;publish-context:=false")
   }
-
-  from sourceSets.main.allSource
 }
+
+
+//archivesBaseName = "SPEaR Power Tools"
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+
+// If this shows as an error in IntelliJ, simply ignore
+version = new groovy.xml.XmlSlurper().parse(file('resources/appian-plugin.xml')).'plugin-info'.version
