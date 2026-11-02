@@ -14,8 +14,8 @@ repositories {
 }
 
 
-// The Appian SDK is proprietary, is not on Maven Central, and must not be committed to this public repo.
-// Point the build at a local copy with -PappianSdkJar=<path>, or set it in ~/.gradle/gradle.properties.
+// The Appian SDK is proprietary, is not on Maven Central, and must not be committed to this public repo. Point the
+// build at a local copy with -PappianSdkJar=<path>, or set it in ~/.gradle/gradle.properties. See README.md.
 def appianSdkJar = providers.gradleProperty('appianSdkJar')
 def appianSdk = files({ appianSdkJar.isPresent() ? appianSdkJar.get() : [] })
 
@@ -26,7 +26,7 @@ def checkAppianSdk = tasks.register('checkAppianSdk') {
       throw new GradleException(
           "Appian plug-in SDK not found. Set the appianSdkJar Gradle property to the path of your " +
               "appian-plug-in-sdk jar, e.g. -PappianSdkJar=/path/to/appian-plug-in-sdk.jar " +
-              "(current value: ${sdkPath.getOrElse('not set')})")
+              "(current value: ${sdkPath.getOrElse('not set')}). See README.md.")
     }
   }
 }
@@ -70,6 +70,7 @@ dependencies {
   testImplementation platform('org.junit:junit-bom:6.1.3')
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core:5.24.0'
+  testRuntimeOnly 'org.apache.logging.log4j:log4j-core:2.26.0'
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
