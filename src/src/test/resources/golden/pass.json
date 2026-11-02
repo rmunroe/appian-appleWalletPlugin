@@ -1,0 +1,73 @@
+{
+    "formatVersion": 1,
+    "serialNumber": "SERIAL-001",
+    "passTypeIdentifier": "pass.test.example",
+    "authenticationToken": "auth-token-0123456789",
+    "description": "Example description",
+    "teamIdentifier": "TEAM123456",
+    "organizationName": "Example Org",
+    "logoText": "Example logo text",
+    "foregroundColor": "rgb(17,34,51)",
+    "backgroundColor": "rgb(68,85,102)",
+    "labelColor": "rgb(119,136,153)",
+    "beacons": [],
+    "locations": [
+        {
+            "latitude": 38.9,
+            "longitude": -77.2,
+            "altitude": 10.5,
+            "relevantText": "Nearby"
+        }
+    ],
+    "barcodes": [
+        {
+            "format": "PKBarcodeFormatQR",
+            "message": "BARCODE-123",
+            "messageEncoding": "ISO-8859-1"
+        }
+    ],
+    "generic": {
+        "headerFields": [
+            {
+                "key": "h",
+                "label": "Header",
+                "value": "Header value"
+            }
+        ],
+        "primaryFields": [
+            {
+                "key": "p",
+                "label": "Primary",
+                "value": "Primary value"
+            }
+        ],
+        "secondaryFields": [
+            {
+                "key": "s",
+                "label": "Secondary",
+                "value": "from-id"
+            }
+        ],
+        "auxiliaryFields": [
+            {
+                "key": "a",
+                "label": "Aux",
+                "value": "Aux value"
+            }
+        ],
+        "backFields": [
+            {
+                "key": "b",
+                "label": "Back",
+                "value": "Back value"
+            }
+        ]
+    },
+    "associatedStoreIdentifiers": [],
+    "associatedApps": [],
+    "maxDistance": 50,
+    "relevantDate": "2030-01-02T03:04:05Z",
+    "expirationDate": "2031-06-07T08:09:10Z",
+    "voided": false,
+    "sharingProhibited": true
+}
