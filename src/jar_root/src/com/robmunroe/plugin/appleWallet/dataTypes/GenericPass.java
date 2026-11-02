@@ -144,11 +144,19 @@ public class GenericPass implements PassType {
                 .organizationName(getOrganizationName())
                 .description(getDescription())
                 .logoText(getLogoText())
-                .maxDistance(getMaxDistance())
-                .relevantDate(getRelevantDate().toInstant())
-                .expirationDate(getExpirationDate().toInstant())
-                .voided(getVoided())
-                .sharingProhibited(getSharingProhibited());
+                .maxDistance(getMaxDistance());
+
+        if (getRelevantDate() != null)
+            builder.relevantDate(getRelevantDate().toInstant());
+
+        if (getExpirationDate() != null)
+            builder.expirationDate(getExpirationDate().toInstant());
+
+        if (getVoided() != null)
+            builder.voided(getVoided());
+
+        if (getSharingProhibited() != null)
+            builder.sharingProhibited(getSharingProhibited());
 
         if (StringUtils.isNotEmpty(getAuthenticationToken()))
             builder.authenticationToken(getAuthenticationToken());
