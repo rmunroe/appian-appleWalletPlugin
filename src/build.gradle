@@ -1,46 +1,76 @@
 plugins {
   id 'java'
-  id 'groovy'
-  id 'org.owasp.dependencycheck' version '7.1.2'
+  id 'org.owasp.dependencycheck' version '13.0.0'
 }
 
 
-group 'com.robmunroe.plugin.appleWallet'
-version '1.0.5'
+group = 'com.robmunroe.plugin.appleWallet'
+// The plugin version has one source of truth: appian-plugin.xml
+version = new groovy.xml.XmlSlurper().parse(file('resources/appian-plugin.xml')).'plugin-info'.version.text()
 
 
 repositories {
   mavenCentral()
-  maven {
-    url "https://oss.sonatype.org/content/repositories/snapshots/"
-  }
-  flatDir {
-    dirs 'lib-compile'
+}
+
+
+// The Appian SDK is proprietary, is not on Maven Central, and must not be committed to this public repo.
+// Point the build at a local copy with -PappianSdkJar=<path>, or set it in ~/.gradle/gradle.properties.
+def appianSdkJar = providers.gradleProperty('appianSdkJar')
+def appianSdk = files({ appianSdkJar.isPresent() ? appianSdkJar.get() : [] })
+
+def checkAppianSdk = tasks.register('checkAppianSdk') {
+  def sdkPath = appianSdkJar
+  doLast {
+    if (!sdkPath.isPresent() || !new File(sdkPath.get()).isFile()) {
+      throw new GradleException(
+          "Appian plug-in SDK not found. Set the appianSdkJar Gradle property to the path of your " +
+              "appian-plug-in-sdk jar, e.g. -PappianSdkJar=/path/to/appian-plug-in-sdk.jar " +
+              "(current value: ${sdkPath.getOrElse('not set')})")
+    }
   }
 }
+
+
+// Bundled into META-INF/lib. Dependencies are non-transitive so this list is exactly what ships, and the tests run
+// against this same set, so a missing library fails the build. jpasskit also depends on pushy (and netty) for push
+// notifications, which this plugin does not use, so they are deliberately left out.
+def bundledLibraries = [
+    'de.brendamour:jpasskit:0.5.9',
+    'com.fasterxml.jackson.core:jackson-annotations:2.22',
+    'com.fasterxml.jackson.core:jackson-core:2.22.4',
+    'com.fasterxml.jackson.core:jackson-databind:2.22.4',
+    'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.4',
+    'com.google.code.gson:gson:2.15.0',
+    'com.google.guava:guava:33.7.2-jre',
+    'commons-codec:commons-codec:1.23.0',
+    'commons-io:commons-io:2.22.0',
+    'org.apache.commons:commons-lang3:3.21.0',
+    'org.bouncycastle:bcpkix-jdk18on:1.86',
+    'org.bouncycastle:bcprov-jdk18on:1.86',
+    'org.bouncycastle:bcutil-jdk18on:1.86',
+    'org.slf4j:slf4j-api:2.0.20',
+]
+
+// Provided by the Appian plug-in container at runtime, so needed to compile but never bundled.
+def containerProvided = [
+    'javax.servlet:javax.servlet-api:4.0.1',
+    'javax.xml.bind:jaxb-api:2.3.1',
+    'org.apache.logging.log4j:log4j-1.2-api:2.26.0',
+]
 
 dependencies {
-  compileOnly fileTree(dir: 'dependencies/lib-compile', include: '*.jar')
-  implementation fileTree(dir: 'jar_root/META-INF/lib', include: '*.jar')
+  bundledLibraries.each { implementation(it) { transitive = false } }
 
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
-  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4'
-  implementation 'com.google.code.gson:gson:2.9.0'
-  implementation 'com.google.guava:guava:31.1-jre'
-  implementation 'commons-codec:commons-codec:1.15'
-  implementation 'commons-io:commons-io:2.11.0'
-  implementation 'org.apache.commons:commons-lang3:3.12.0'
-  implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
-  implementation 'org.slf4j:slf4j-api:2.0.3'
+  compileOnly appianSdk
+  containerProvided.each { compileOnly it }
 
-  testImplementation fileTree(dir: 'dependencies/lib-compile', include: '*.jar')
-  testImplementation platform('org.junit:junit-bom:5.14.4')
+  testImplementation appianSdk
+  containerProvided.each { testImplementation it }
+  testImplementation platform('org.junit:junit-bom:6.1.3')
   testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.mockito:mockito-core:5.24.0'
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-test {
-  useJUnitPlatform()
 }
 
 
@@ -56,8 +86,14 @@ sourceSets {
 }
 
 
-configurations {
-  implementation.transitive = false
+tasks.withType(JavaCompile).configureEach {
+  options.release = 17
+  dependsOn checkAppianSdk
+}
+
+
+test {
+  useJUnitPlatform()
 }
 
 
@@ -65,10 +101,8 @@ jar {
   dependsOn check
   duplicatesStrategy = DuplicatesStrategy.FAIL
 
-  configurations.implementation.setCanBeResolved(true)
-
   into('META-INF/lib') {
-    from(configurations.implementation)
+    from(configurations.runtimeClasspath)
   }
 
   into('src') {
@@ -81,11 +115,11 @@ jar {
 }
 
 
-//archivesBaseName = "SPEaR Power Tools"
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-
-
-// If this shows as an error in IntelliJ, simply ignore
-version = new groovy.xml.XmlSlurper().parse(file('resources/appian-plugin.xml')).'plugin-info'.version
+dependencyCheck {
+  scanConfigurations = ['runtimeClasspath']
+  if (providers.gradleProperty('nvdApiKey').isPresent()) {
+    nvd {
+      apiKey = providers.gradleProperty('nvdApiKey').get()
+    }
+  }
+}

@@ -4,8 +4,8 @@
         <description>Provides the ability to create, sign, and compress passes that can be imported into Apple Wallet
         </description>
         <vendor name="Appian Corporation" url="http://www.appian.com"/>
-        <version>1.0.6</version>
-        <application-version min="20.2"/>
+        <version>2.0.0</version>
+        <application-version min="24.4"/>
     </plugin-info>
 
     <function-category key="AppleWalletCategory" name="Apple Wallet"/>

@@ -2,9 +2,9 @@ package com.robmunroe.plugin.appleWallet.dataTypes;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.robmunroe.plugin.appleWallet.helpers.PassHelper;
 import com.robmunroe.plugin.appleWallet.testsupport.PkPassArchive;
 import com.robmunroe.plugin.appleWallet.testsupport.TestSigningMaterial;
-import de.brendamour.jpasskit.signing.PKInMemorySigningUtil;
 import de.brendamour.jpasskit.signing.PKPassTemplateInMemory;
 import de.brendamour.jpasskit.signing.PKSigningInformation;
 import de.brendamour.jpasskit.signing.PKSigningInformationUtil;
@@ -57,7 +57,7 @@ class GenericPassSigningTest {
         PKPassTemplateInMemory template = new PKPassTemplateInMemory();
         template.addFile(PKPassTemplateInMemory.PK_ICON, new ByteArrayInputStream(ICON));
 
-        byte[] signed = new PKInMemorySigningUtil().createSignedAndZippedPkPassArchive(
+        byte[] signed = PassHelper.newSigningUtil().createSignedAndZippedPkPassArchive(
                 fullyPopulatedPass().getPassBuilder().build(), template, signingInformation);
         archive = PkPassArchive.read(signed);
 

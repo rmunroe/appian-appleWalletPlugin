@@ -1,0 +1,9 @@
+.DS_Store
+
+# Build output
+src/.gradle/
+src/build/
+src/out/
+
+# Appian's SDK is proprietary, so it must not be committed. See README.md.
+src/dependencies/lib-compile/
