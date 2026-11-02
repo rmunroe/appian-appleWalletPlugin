@@ -1,7 +1,11 @@
 package com.robmunroe.plugin.appleWallet.helpers;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.ToNumberPolicy;
@@ -18,6 +22,7 @@ import de.brendamour.jpasskit.signing.PKInMemorySigningUtil;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +38,16 @@ public class PassHelper {
 
 
     public static PKInMemorySigningUtil newSigningUtil() {
-        return new PKInMemorySigningUtil(new ObjectMapper().addMixIn(PKPass.class, OmitEmptyRelevantDates.class));
+        // These are jpasskit's own default serialization settings, which it doesn't expose for reuse
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.setDateFormat(new StdDateFormat());
+        mapper.configOverride(Date.class).setFormat(JsonFormat.Value.forPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+        mapper.setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.USE_DEFAULTS));
+        mapper.registerModule(new JavaTimeModule());
+
+        mapper.addMixIn(PKPass.class, OmitEmptyRelevantDates.class);
+        return new PKInMemorySigningUtil(mapper.writer());
     }
 
 
