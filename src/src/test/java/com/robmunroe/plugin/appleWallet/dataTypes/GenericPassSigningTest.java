@@ -20,9 +20,6 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,10 +57,6 @@ class GenericPassSigningTest {
         byte[] signed = PassHelper.newSigningUtil().createSignedAndZippedPkPassArchive(
                 fullyPopulatedPass().getPassBuilder().build(), template, signingInformation);
         archive = PkPassArchive.read(signed);
-
-        Path actual = Paths.get("build", "actual-pass.json");
-        Files.createDirectories(actual.getParent());
-        Files.write(actual, archive.get("pass.json"));
     }
 
     @Test
