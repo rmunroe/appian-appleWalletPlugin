@@ -1,0 +1,110 @@
+# AGENTS.md
+
+Guidance for anyone working in this repo, human or coding agent. See [README.md](README.md) for what the plug-in does and how to use it.
+
+## Current status (November 3, 2026)
+
+**2.0.0 is code complete and awaiting live testing.** It's on the `modernize-2.0.0` branch, not merged to `main`, and not submitted to AppMarket. `main` is still 1.0.6.
+
+**The goal of 2.0.0:** current dependencies and real bugs fixed, with no new features and no regressions for existing process models.
+
+### Verified
+
+- A clean build passes with all 42 unit tests, on JDK 17 against the 25.3 SDK.
+- `pass.json` content matches the golden file captured from the 1.0.6 code, and the signature verifies.
+- The jar bundles the expected 14 libraries, with no netty, pushy, Spring, or Appian classes.
+- The plug-in's classes contain no `ServiceLocator`, `printStackTrace`, or deprecated document API references.
+- OSV reports no known vulnerabilities in the bundled versions, as of the 2.0.0 dependency update.
+
+### Not verified yet
+
+Unit tests mock Appian, so nothing below has been proven. Do these on a 26.6 development site, in this order:
+
+1. The plug-in deploys and all classes load, especially `org.apache.log4j`. A missing Log4j stops the plug-in's classes from initializing.
+2. **The servlet's rights check still works.** A user with rights gets the pass, and a user without rights gets a 403. This is the top risk: the servlet now uses an injected `ContentService`, and the docs don't say which user it runs as. If the 403 fails, don't ship. Revert `afb9b60` to go back to `ServiceLocator`.
+3. An existing process model using the smart service opens and runs without reconfiguration.
+4. A valid run makes a pass. A bad input gives `errorOccurred=true`, a useful `errorTxt`, and no empty document.
+5. `awpGetUuid` works.
+6. The servlet returns 400 for a missing id, and 404 for an unknown id or a non-pass document. A `.p12` UUID must not download. Also check a malformed UUID, because the 404 there is an assumption.
+7. Replacing a document with a new version uses the new version.
+8. **A real pass installs in Apple Wallet on an iPhone.** This needs a real Pass Type ID certificate, and it's the only end-to-end proof of signing.
+
+Also still to do:
+
+- Run `./gradlew dependencyCheckAnalyze`, which needs an NVD API key and has never been run for 2.0.0.
+- Test on a 24.4 or 25.x site if possible. The 24.4 minimum rests on API availability, not a test run.
+
+### Open questions
+
+- **Log4j and JAXB bundling:** Appian's [Plug-in Packages page](https://docs.appian.com/suite/help/26.6/Custom_Plug-in_Packages.html) lists `org.apache.log4j`, `javax.xml.bind`, and `javax.inject` as "provided but deprecated" and says to bundle such libraries. All 3 are compile-only here. A bundled copy might not work: Appian looks for its own `@Inject` and may not see bundled JAXB annotations, and Log4j output may not reach Appian's logs. Check 1 above tests the Log4j part.
+- **Global security provider:** jpasskit's `CertUtils` calls `Security.addProvider` to register BouncyCastle. AppMarket policy discourages changing global JVM settings, so watch for this in review and on redeploys.
+
+### Decisions already made
+
+Ask before reversing any of these:
+
+- **Vendor:** stays `Appian Corporation`, because that's what the plug-in is published as. Revisit only if AppMarket rejects it.
+- **Minimum version:** Appian 24.4 on Java 17.
+- **Logging:** Log4j, not SLF4J. AppMarket policy says "Logging must be done through Log4j." `slf4j-api` is only bundled because jpasskit uses it.
+- **Errors:** `run()` reports failures through `errorOccurred` and `errorTxt`. Don't throw `SmartServiceException` or move checks into `validate()`. Either would change how existing process models behave on failure, because errors in `validate()` stop `run()`.
+- **`relevantDates`:** not supported, because that would be a new feature. Apple has deprecated `relevantDate` in its favor, so this is the likely first feature for a later release. jpasskit's empty `relevantDates` array is deliberately left out of `pass.json` by a mix-in in `PassHelper`.
+- **Pass ownership:** the servlet relies on Appian document security. There's no separate check that this plug-in created the pass.
+
+### Next steps
+
+1. Run the checks above and fix what they find.
+2. Merge `modernize-2.0.0` to `main`.
+3. Submit 2.0.0 to AppMarket, with the behavior changes from the README in the release notes.
+
+Don't merge to `main` or submit to AppMarket without being asked.
+
+## Commands
+
+```bash
+cd src
+./gradlew build -PappianSdkJar=/path/to/appian-plug-in-sdk.jar   # tests and jar
+./gradlew test -PappianSdkJar=/path/to/appian-plug-in-sdk.jar    # tests only
+```
+
+Use JDK 17. The property can also go in `~/.gradle/gradle.properties`. The jar is written to `src/build/libs/`.
+
+## Layout
+
+The Gradle project root is `src/`, not the repo root.
+
+- `src/jar_root/src/com/robmunroe/plugin/appleWallet/`: plug-in source.
+  - `smartServices/`: `CreatePassSmartService` holds the logic, and `CreateGenericPassSmartService` is the registered subclass.
+  - `servlet/`: `DownloadPassServlet` is thin, and `DownloadPassHandler` holds the logic so it can be tested without the container.
+  - `helpers/ContentHelper`: the single place for document access.
+  - `dataTypes/`: the CDTs.
+- `src/src/test/`: tests.
+- `src/resources/appian-plugin.xml`: the descriptor. `build.gradle` reads the version from here.
+
+## What must not change
+
+Existing process models depend on these:
+
+- Plug-in key `com.robmunroe.plugin.appleWallet`, smart service key `CreateGenericPassSmartService_1`, function `awpGetUuid`, servlet URL `/downloadPass`.
+- Smart service input and output names.
+- CDT classes: namespace, names, fields, `propOrder`, and `javax.xml.bind`. Appian doesn't support `jakarta` here.
+
+## Conventions
+
+- **Dependencies are non-transitive.** `bundledLibraries` in `build.gradle` is exactly what ships, and the tests run against the same set, so a missing library fails the build. pushy and netty stay out on purpose: only jpasskit's push notification class needs them, and the plug-in never loads it.
+- **Container libraries are compile-only.** Add them to `containerProvided`. Test-only needs go under `test*` configurations, so they stay out of the jar.
+- **Get services by injection.** Use constructor parameters in smart services, method parameters in functions, and `@Inject` fields in servlets. Don't use `ServiceLocator`.
+- **Read documents as streams.** Use `ContentHelper.openCurrentVersion`, which resolves the current version first. Direct file system access is forbidden by AppMarket policy.
+- **Close what you open,** and log through Log4j. No `System.out` or `printStackTrace`.
+- **Never commit the Appian SDK or real signing material.** `src/dependencies/lib-compile/` is ignored, and tests generate throwaway certificates at run time.
+
+## Testing
+
+- Write a failing test first for any bug fix.
+- `GenericPassSigningTest` compares `pass.json` to `src/src/test/resources/golden/pass.json`, captured from the 1.0.6 code. If a dependency upgrade makes it fail, treat it as a behavior change: this test has already caught 2 regressions. Don't update the golden file without explaining the difference.
+- `com/appiancorp/content/DocumentHelper` and `com/appiancorp/plugins/PluginUsageLogger` under `src/src/test/java` are test-only stubs, needed because the SDK jar omits classes that `new Document()` uses. They aren't shipped.
+- Spring is a test runtime dependency only, because `AppianServlet` can't load without it.
+
+## Known leftovers
+
+- `src/.idea` is tracked and out of date (`compiler.xml` still says Java 1.8). Reimporting the Gradle project fixes it locally.
+- `docs/` is an empty Sphinx skeleton.
