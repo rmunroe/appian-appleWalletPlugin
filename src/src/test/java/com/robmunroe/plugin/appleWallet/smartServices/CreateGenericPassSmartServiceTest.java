@@ -238,4 +238,14 @@ class CreateGenericPassSmartServiceTest {
         assertTrue(service.getErrorOccurred());
         assertTrue(service.getErrorTxt().contains("IllegalStateException"), service.getErrorTxt());
     }
+
+    @Test
+    void failureUnrelatedToThePassContentIsNotBlamedOnTheArguments() throws Exception {
+        when(contentService.uploadDocument(any(), any())).thenThrow(new IllegalStateException("storage unavailable"));
+
+        service.run();
+
+        assertTrue(service.getErrorOccurred());
+        assertEquals("Could not create the pass: storage unavailable", service.getErrorTxt());
+    }
 }

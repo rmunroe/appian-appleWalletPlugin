@@ -30,7 +30,8 @@ import java.io.InputStream;
 public class CreatePassSmartService extends AppianSmartService {
     private static final Logger LOG = Logger.getLogger(CreatePassSmartService.class);
 
-    private static final String ERROR_PREFIX = "The provided arguments did not produce a valid Pass: ";
+    private static final String INVALID_PASS_PREFIX = "The provided arguments did not produce a valid Pass: ";
+    private static final String CREATE_FAILED_PREFIX = "Could not create the pass: ";
 
     private final SecureCredentialsStore scs;
     private final ContentService contentService;
@@ -80,7 +81,7 @@ public class CreatePassSmartService extends AppianSmartService {
 
             if (!passBuilder.isValid()) {
                 this.errorOccurred = true;
-                this.errorTxt = ERROR_PREFIX + String.join("; ", passBuilder.getValidationErrors());
+                this.errorTxt = INVALID_PASS_PREFIX + String.join("; ", passBuilder.getValidationErrors());
                 return;
             }
 
@@ -110,7 +111,7 @@ public class CreatePassSmartService extends AppianSmartService {
         } catch (Exception e) {
             LOG.error("Could not create pass " + this.outputFilename, e);
             errorOccurred = true;
-            errorTxt = ERROR_PREFIX + (e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.toString());
+            errorTxt = CREATE_FAILED_PREFIX + (e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.toString());
         }
     }
 
