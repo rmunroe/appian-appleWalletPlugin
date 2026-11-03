@@ -5,7 +5,7 @@
         </description>
         <vendor name="Appian Corporation" url="https://www.appian.com"/>
         <version>2.0.0</version>
-        <application-version min="24.4"/>
+        <application-version min="26.6"/>
     </plugin-info>
 
     <function-category key="AppleWalletCategory" name="Apple Wallet"/>

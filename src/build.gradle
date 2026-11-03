@@ -14,24 +14,6 @@ repositories {
 }
 
 
-// The Appian SDK is proprietary, is not on Maven Central, and must not be committed to this public repo. Point the
-// build at a local copy with -PappianSdkJar=<path>, or set it in ~/.gradle/gradle.properties. See README.md.
-def appianSdkJar = providers.gradleProperty('appianSdkJar')
-def appianSdk = files({ appianSdkJar.isPresent() ? appianSdkJar.get() : [] })
-
-def checkAppianSdk = tasks.register('checkAppianSdk') {
-  def sdkPath = appianSdkJar
-  doLast {
-    if (!sdkPath.isPresent() || !new File(sdkPath.get()).isFile()) {
-      throw new GradleException(
-          "Appian plug-in SDK not found. Set the appianSdkJar Gradle property to the path of your " +
-              "appian-plug-in-sdk jar, e.g. -PappianSdkJar=/path/to/appian-plug-in-sdk.jar " +
-              "(current value: ${sdkPath.getOrElse('not set')}). See README.md.")
-    }
-  }
-}
-
-
 // Bundled into META-INF/lib. Dependencies are non-transitive so this list is exactly what ships, and the tests run
 // against this same set, so a missing library fails the build. jpasskit also depends on pushy (and netty) for push
 // notifications, which this plugin does not use, so they are deliberately left out.
@@ -55,6 +37,7 @@ def bundledLibraries = [
 // Provided by the Appian plug-in container at runtime, so needed to compile but never bundled. javax.inject in
 // particular has to be the container's copy, because that's the @Inject that AppianServlet looks for.
 def containerProvided = [
+    'com.appian:appian-plug-in-sdk:26.6',
     'javax.inject:javax.inject:1',
     'javax.servlet:javax.servlet-api:4.0.1',
     'javax.xml.bind:jaxb-api:2.3.1',
@@ -64,10 +47,8 @@ def containerProvided = [
 dependencies {
   bundledLibraries.each { implementation(it) { transitive = false } }
 
-  compileOnly appianSdk
   containerProvided.each { compileOnly it }
 
-  testImplementation appianSdk
   containerProvided.each { testImplementation it }
   testImplementation platform('org.junit:junit-bom:6.1.3')
   testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -93,7 +74,6 @@ sourceSets {
 
 tasks.withType(JavaCompile).configureEach {
   options.release = 17
-  dependsOn checkAppianSdk
 }
 
 

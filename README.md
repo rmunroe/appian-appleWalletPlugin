@@ -4,7 +4,7 @@ An Appian plug-in that creates signed Apple Wallet passes (`.pkpass` files) from
 
 - **Current version in this branch:** 2.0.0, in testing and not yet released. See [Project status](#project-status).
 - **Last published version:** 1.0.6.
-- **Requires:** Appian 24.4 or later. Sites on older versions should stay on 1.0.6.
+- **Requires:** Appian 26.6 or later. Sites on older versions should stay on 1.0.6.
 
 ## What's in the plug-in
 
@@ -152,7 +152,7 @@ Existing process models shouldn't need changes, because the plug-in key, smart s
 
 These behaviors change in 2.0.0:
 
-- **Minimum version:** Appian 24.4, up from 20.2.
+- **Minimum version:** Appian 26.6, up from 20.2.
 - **Numbers on passes:** whole numbers display as `5`, not `5.0`.
 - **Null field values:** display as blank, not the word `null`.
 - **Unset optional fields:** null `relevantDate`, `expirationDate`, `voided`, or `sharingProhibited` no longer fail the pass.
@@ -163,16 +163,16 @@ These behaviors change in 2.0.0:
 
 ## Building from source
 
-You need JDK 17 and a copy of the Appian plug-in SDK jar, `appian-plug-in-sdk-<version>.jar`, from your own Appian installation. The SDK is proprietary, so it isn't in this repo.
-
-Tell the build where the jar is, either on the command line or by setting `appianSdkJar` in `~/.gradle/gradle.properties`:
+You need JDK 17. Gradle downloads the [Appian plug-in SDK](https://central.sonatype.com/artifact/com.appian/appian-plug-in-sdk) from Maven Central, along with the other dependencies.
 
 ```bash
 cd src
-./gradlew build -PappianSdkJar=/path/to/appian-plug-in-sdk.jar
+./gradlew build
 ```
 
 This runs the tests and writes the plug-in to `src/build/libs/`.
+
+The SDK version is set in `src/build.gradle`. It only affects compiling and testing, because Appian supplies these classes at run time and the SDK isn't bundled in the plug-in.
 
 To check the bundled libraries for known vulnerabilities, run `./gradlew dependencyCheckAnalyze`. Pass `-PnvdApiKey=<key>` with an [NVD API key](https://nvd.nist.gov/developers/request-an-api-key), because without one the vulnerability data can take a very long time to download.
 

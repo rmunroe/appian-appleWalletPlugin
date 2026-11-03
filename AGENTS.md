@@ -10,7 +10,8 @@ Guidance for anyone working in this repo, human or coding agent. See [README.md]
 
 ### Verified
 
-- A clean build passes with all 42 unit tests, on JDK 17 against the 25.3 SDK.
+- A clean build passes with all 42 unit tests, on JDK 17 against the 26.6 SDK from Maven Central.
+- The jar built against the 26.6 SDK has the same contents as the one built against the 25.3 SDK.
 - `pass.json` content matches the golden file captured from the 1.0.6 code, and the signature verifies.
 - The jar bundles the expected 14 libraries, with no netty, pushy, Spring, or Appian classes.
 - The plug-in's classes contain no `ServiceLocator`, `printStackTrace`, or deprecated document API references.
@@ -32,7 +33,6 @@ Unit tests mock Appian, so nothing below has been proven. Do these on a 26.6 dev
 Also still to do:
 
 - Run `./gradlew dependencyCheckAnalyze`, which needs an NVD API key and has never been run for 2.0.0.
-- Test on a 24.4 or 25.x site if possible. The 24.4 minimum rests on API availability, not a test run.
 
 ### Open questions
 
@@ -44,7 +44,7 @@ Also still to do:
 Ask before reversing any of these:
 
 - **Vendor:** stays `Appian Corporation`, because that's what the plug-in is published as. Revisit only if AppMarket rejects it.
-- **Minimum version:** Appian 24.4 on Java 17.
+- **Minimum version:** Appian 26.6 on Java 17, matching the SDK the plug-in is built against.
 - **Logging:** Log4j, not SLF4J. AppMarket policy says "Logging must be done through Log4j." `slf4j-api` is only bundled because jpasskit uses it.
 - **Errors:** `run()` reports failures through `errorOccurred` and `errorTxt`. Don't throw `SmartServiceException` or move checks into `validate()`. Either would change how existing process models behave on failure, because errors in `validate()` stop `run()`.
 - **`relevantDates`:** not supported, because that would be a new feature. Apple has deprecated `relevantDate` in its favor, so this is the likely first feature for a later release. jpasskit's empty `relevantDates` array is deliberately left out of `pass.json` by a mix-in in `PassHelper`.
@@ -62,11 +62,11 @@ Don't merge to `main` or submit to AppMarket without being asked.
 
 ```bash
 cd src
-./gradlew build -PappianSdkJar=/path/to/appian-plug-in-sdk.jar   # tests and jar
-./gradlew test -PappianSdkJar=/path/to/appian-plug-in-sdk.jar    # tests only
+./gradlew build   # tests and jar
+./gradlew test    # tests only
 ```
 
-Use JDK 17. The property can also go in `~/.gradle/gradle.properties`. The jar is written to `src/build/libs/`.
+Use JDK 17. Gradle gets the Appian SDK from Maven Central, and its version is in `containerProvided` in `build.gradle`. The jar is written to `src/build/libs/`.
 
 ## Layout
 
@@ -95,13 +95,14 @@ Existing process models depend on these:
 - **Get services by injection.** Use constructor parameters in smart services, method parameters in functions, and `@Inject` fields in servlets. Don't use `ServiceLocator`.
 - **Read documents as streams.** Use `ContentHelper.openCurrentVersion`, which resolves the current version first. Direct file system access is forbidden by AppMarket policy.
 - **Close what you open,** and log through Log4j. No `System.out` or `printStackTrace`.
-- **Never commit the Appian SDK or real signing material.** `src/dependencies/lib-compile/` is ignored, and tests generate throwaway certificates at run time.
+- **Never commit SDK jars or real signing material.** The SDK comes from Maven Central, `src/dependencies/lib-compile/` is ignored because old local copies may still be there, and tests generate throwaway certificates at run time.
 
 ## Testing
 
 - Write a failing test first for any bug fix.
 - `GenericPassSigningTest` compares `pass.json` to `src/src/test/resources/golden/pass.json`, captured from the 1.0.6 code. If a dependency upgrade makes it fail, treat it as a behavior change: this test has already caught 2 regressions. Don't update the golden file without explaining the difference.
 - `com/appiancorp/content/DocumentHelper` and `com/appiancorp/plugins/PluginUsageLogger` under `src/src/test/java` are test-only stubs, needed because the SDK jar omits classes that `new Document()` uses. They aren't shipped.
+- `com/appiancorp/suiteapi/resources/Data` under `src/src/test/java` is also a test-only stub. The 26.6 SDK's copy of this enum is missing its private constructor, so it can't initialize, and Mockito can't mock `ContentService` without it. Its constants must match the SDK's, so check them when changing the SDK version.
 - Spring is a test runtime dependency only, because `AppianServlet` can't load without it.
 
 ## Known leftovers

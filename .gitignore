@@ -6,5 +6,5 @@ src/.gradle/
 src/build/
 src/out/
 
-# Appian's SDK is proprietary, so it must not be committed. See README.md.
+# Old local copies of Appian's SDK. The build gets it from Maven Central now.
 src/dependencies/lib-compile/
