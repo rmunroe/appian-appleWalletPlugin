@@ -11,7 +11,7 @@ Guidance for anyone working in this repo, human or coding agent. See [README.md]
 ### Verified
 
 - A clean build passes with all 42 unit tests, on JDK 17 against the 26.6 SDK from Maven Central.
-- The jar built against the 26.6 SDK has the same contents as the one built against the 25.3 SDK.
+- The jar built against the 26.6 SDK has the same contents as the one built against the 25.3 SDK, apart from the minimum version in the descriptor and the smart service icons.
 - `pass.json` content matches the golden file captured from the 1.0.6 code, and the signature verifies.
 - The jar bundles the expected 14 libraries, with no netty, pushy, Spring, or Appian classes.
 - The plug-in's classes contain no `ServiceLocator`, `printStackTrace`, or deprecated document API references.
