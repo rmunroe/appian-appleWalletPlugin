@@ -4,7 +4,7 @@ Guidance for anyone working in this repo, human or coding agent. See [README.md]
 
 ## Current status (November 4, 2026)
 
-**2.0.0 is in live testing.** It's on the `modernize-2.0.0` branch, not merged to `main`, and not submitted to AppMarket. `main` is still 1.0.6.
+**2.0.0 has one live check left.** It's on the `modernize-2.0.0` branch, not merged to `main`, and not submitted to AppMarket. `main` is still 1.0.6.
 
 **The goal of 2.0.0:** current dependencies and real bugs fixed, with no new features and no regressions for existing process models.
 
@@ -23,23 +23,17 @@ On the `edge.appiancorp.com` dev site, Appian 26.9.50.0. Nothing has been run on
 
 - The plug-in deploys and its classes load, including `org.apache.log4j`. Its errors reach `tomcat-stdOut.log`.
 - A valid run makes a pass, and a bad input gives `errorOccurred=true`, a useful `errorTxt`, and no document.
-- A pass with all fields set, downloaded through the servlet, opens on a Mac. Its `pass.json` shows `5`, `10000000000`, and a blank null value, its manifest hashes match, and its signature verifies up to Apple's root certificate. A pass with the optional values left null hasn't been inspected.
-- The servlet starts, serves a pass with a 200 to a signed-in user with rights to it, and returns 400 for a missing id.
+- **A pass signed with a real Pass Type ID certificate installs in Apple Wallet on an iPhone.** Passes with all fields set and with optional values left null both show `5`, `10000000000`, and a blank null value in `pass.json`, their manifest hashes match, and their signatures verify up to Apple's root certificate.
+- The servlet serves a pass with a 200 to a signed-in user with rights to it. It returns 400 for a missing or empty id, and 404 for an unknown id, a malformed id, and a non-pass document. The `.p12` gets a 404 for an administrator with rights to it, so it doesn't download.
+- Replacing a document with a new version uses the new version. This was checked with the icon, and the certificate, key, and images all use the same code path.
+- **The servlet's rights check works.** With 2 non-administrator users, one with Viewer rights to the pass got a 200, and one with no rights got a 403. Both got a 403 for the `.p12`, which neither has rights to.
 - `awpGetUuid` returns the right UUID, and null for null.
 
 ### Not verified yet
 
-Unit tests mock Appian, so nothing below has been proven. Do these in this order:
-
-1. **The servlet's rights check works.** A user with rights gets the pass, and a user without rights gets a 403. This is the top risk, and if the 403 fails, don't ship. Test with users who aren't system administrators.
-2. An existing process model using the smart service opens and runs without reconfiguration.
-3. The servlet returns 404 for an unknown id or a non-pass document. A `.p12` UUID must not download. Also check a malformed UUID, because the 404 there is an assumption.
-4. Replacing a document with a new version uses the new version.
-5. **A real pass installs in Apple Wallet on an iPhone.** This needs a real Pass Type ID certificate, and it's the only end-to-end proof of signing.
-
-Also still to do:
-
-- Run `./gradlew dependencyCheckAnalyze`, which needs an NVD API key and has never been run for 2.0.0.
+- **An existing process model:** one built on 1.0.6 has to open and run without reconfiguration.
+- **Appian 26.6:** see [Decisions already made](#decisions-already-made).
+- **`./gradlew dependencyCheckAnalyze`:** it has never been run for 2.0.0, because it needs an NVD API key and none is available. The OSV result above is the only vulnerability check.
 
 ### Open questions
 
@@ -51,7 +45,7 @@ Also still to do:
 Ask before reversing any of these:
 
 - **Vendor:** stays `Appian Corporation`, because that's what the plug-in is published as. Revisit only if AppMarket rejects it.
-- **Minimum version:** Appian 26.6 on Java 17, matching the SDK the plug-in is built against.
+- **Minimum version:** Appian 26.6 on Java 17, matching the SDK the plug-in is built against. It's only been run on 26.9. That's accepted because it's built against the 26.6 SDK. It will be tested on 26.6 after AppMarket submission, and any failure gets raised as a bug.
 - **Logging:** Log4j, not SLF4J. AppMarket policy says "Logging must be done through Log4j." `slf4j-api` is only bundled because jpasskit uses it.
 - **Errors:** `run()` reports failures through `errorOccurred` and `errorTxt`. Don't throw `SmartServiceException` or move checks into `validate()`. Either would change how existing process models behave on failure, because errors in `validate()` stop `run()`.
 - **`relevantDates`:** not supported, because that would be a new feature. Apple has deprecated `relevantDate` in its favor, so this is the likely first feature for a later release. jpasskit's empty `relevantDates` array is deliberately left out of `pass.json` by a mix-in in `PassHelper`.

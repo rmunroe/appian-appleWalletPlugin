@@ -342,4 +342,4 @@ The tests create their own throwaway certificates at run time, so no real creden
 
 ## Project status
 
-The 2.0.0 work is on the `modernize-2.0.0` branch. It passes its build and unit tests, but those tests mock Appian, so it hasn't yet been proven on a live site or on an iPhone. See [AGENTS.md](AGENTS.md) for the details and remaining checks.
+The 2.0.0 work is on the `modernize-2.0.0` branch. It has been tested on a live Appian 26.9 site, and a pass it signed installs in Apple Wallet on an iPhone. It hasn't yet been run on 26.6, or with a process model built on 1.0.6. See [AGENTS.md](AGENTS.md) for the details and remaining checks.
