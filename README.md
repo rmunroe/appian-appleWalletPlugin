@@ -17,20 +17,171 @@ An Appian plug-in that creates signed Apple Wallet passes (`.pkpass` files) from
 
 Only generic passes are supported. The plug-in doesn't handle pass updates, push notifications, or the other pass styles (boarding passes, coupons, etc.).
 
-## Before you start
+## Before you begin
 
-You need the following from your [Apple Developer account](https://developer.apple.com/documentation/walletpasses):
+### 1. Prerequisites from your Apple Developer account
 
-1. A **Pass Type ID**, and your **Team ID**.
-2. The **Pass Type ID certificate and private key**, exported as a password-protected `.p12` file.
-3. The **Apple WWDR intermediate certificate** that issued your certificate.
+To sign Apple Wallet passes you need three things from your [Apple Developer account](https://developer.apple.com/documentation/walletpasses):
 
-Then set these up in Appian:
+1. A **Pass Type ID** and your **Team ID**
+2. The **Pass Type ID certificate and private key**, exported as a password-protected `.p12` file
+3. The **Apple WWDR intermediate certificate** that issued your certificate
 
-1. Upload the `.p12` and WWDR certificate as documents, in a folder that only the people and processes that need them can read.
-2. Upload your pass images as documents. An icon is required, and Apple's documentation lists the image sizes.
-3. Go to [Third-Party Credentials](https://docs.appian.com/suite/help/26.6/admin-third-party-credentials.html) in the Admin Console and create an entry with a field named `Password`, holding the `.p12` password. The plug-in reads the `password` attribute of the site-wide credentials.
-4. Add this plug-in to that entry's **Plug-ins** list.
+You need a paid Apple Developer Program membership, and your account role must be **Account Holder** or **Admin** to create identifiers and certificates.
+
+#### Step 1: Find your Team ID
+
+1. Sign in at [developer.apple.com/account](https://developer.apple.com/account).
+2. Scroll to **Membership details**.
+3. Copy the **Team ID**, a 10-character alphanumeric string such as `A1B2C3D4E5`. This will be used as the `teamIdentifier` input in the Smart Service.
+
+#### Step 2: Create a Pass Type ID
+
+1. In your developer account, go to **Certificates, Identifiers & Profiles** → **Identifiers**.
+2. Click the **+** button.
+3. Select **Pass Type IDs** and click **Continue**.
+4. Enter:
+    - **Description**: a human-readable name, for example `Acme Loyalty Card`.
+    - **Identifier**: a reverse-DNS string starting with `pass.`, for example `pass.com.acme.loyalty`.
+5. Click **Continue**, then **Register**.
+6. Record the identifier. This is your **Pass Type ID**, and it must match the `passTypeIdentifier` field in your `pass.json` exactly.
+
+#### Step 3: Create a Certificate Signing Request (CSR)
+
+Choose **Option A** on a Mac or **Option B** on any platform with OpenSSL.
+
+##### Option A: macOS (Keychain Access)
+
+1. Open **Keychain Access**. On recent macOS versions, the quickest way to find it is Spotlight (⌘ + Space, then type "Keychain Access").
+2. From the menu bar, choose **Keychain Access** → **Certificate Assistant** → **Request a Certificate From a Certificate Authority…**
+3. Fill in:
+    - **User Email Address**: your email.
+    - **Common Name**: a descriptive name, for example `Acme Pass Signing Key`.
+    - **CA Email Address**: leave blank.
+4. Select **Saved to disk** and click **Continue**.
+5. Save the `.certSigningRequest` file.
+
+Keychain Access generates the private key and stores it in your **login** keychain. Do the rest of the macOS steps on this same Mac, because the key exists only here.
+
+##### Option B: OpenSSL (Windows, Linux, or macOS)
+
+```bash
+# Generate a private key
+openssl genrsa -out pass.key 2048
+
+# Create the CSR (replace the subject values with your own)
+openssl req -new -key pass.key -out pass.csr \
+  -subj "/emailAddress=you@example.com/CN=Acme Pass Signing Key/C=US"
+```
+
+Keep `pass.key` safe. You'll need it in Step 5.
+
+#### Step 4: Create and download the Pass Type ID certificate
+
+1. Go to **Certificates, Identifiers & Profiles** → **Identifiers**.
+2. Use the filter dropdown at the top right to show **Pass Type IDs**, then select the one you created in Step 2.
+3. Under **Production Certificates**, click **Create Certificate**.
+4. Upload the CSR file from Step 3 and click **Continue**.
+5. Click **Download** to save the certificate, usually named `pass.cer`.
+
+Note the certificate's expiration date. When it expires, passes can no longer be signed or updated, so you'll need to repeat this process before then.
+
+#### Step 5: Export the certificate and private key as a `.p12` file
+
+##### Option A: macOS (Keychain Access)
+
+1. Double-click `pass.cer` to install it into your **login** keychain.
+2. In Keychain Access, select the **login** keychain and the **My Certificates** tab.
+3. Find the certificate named **Pass Type ID: pass.com.acme.loyalty** (your identifier).
+4. Click the disclosure arrow next to it and confirm a private key appears underneath. If there's no key, the certificate was installed on a different Mac from the one that created the CSR.
+5. Right-click the **certificate** (not the key) and choose **Export "Pass Type ID: …"**.
+6. Set the file format to **Personal Information Exchange (.p12)** and save it, for example as `pass.p12`.
+7. When prompted, enter a strong **export password**. Your pass-signing code will need this password.
+8. Enter your Mac login password if macOS asks for it to allow the export.
+
+##### Option B: OpenSSL
+
+```bash
+# Convert the downloaded certificate from DER to PEM
+openssl x509 -inform der -in pass.cer -out pass.pem
+
+# Bundle the certificate and private key into a password-protected .p12
+openssl pkcs12 -export -inkey pass.key -in pass.pem -out pass.p12
+```
+
+You'll be prompted to set an export password.
+
+If you use OpenSSL 3.x and your signing library fails to read the `.p12`, add the `-legacy` flag to the `pkcs12` command. Older libraries don't support the newer default encryption.
+
+#### Step 6: Download the Apple WWDR intermediate certificate
+
+Apple issues signing certificates from several generations of its Worldwide Developer Relations (WWDR) intermediate certificate, so first check which one issued yours.
+
+1. Open your Pass Type ID certificate:
+    - **macOS**: double-click it in Keychain Access and expand **Details**.
+    - **OpenSSL**: run `openssl x509 -in pass.pem -noout -issuer`.
+2. Look at the **Issuer**. Its **Organizational Unit (OU)** field shows the generation, for example `OU=G4`.
+3. Go to the [Apple PKI page](https://www.apple.com/certificateauthority/) and, under **Apple Intermediate Certificates**, download the matching **Worldwide Developer Relations** certificate (for example, `AppleWWDRCAG4.cer` for G4).
+
+#### Checklist
+
+When you're done, you should have:
+
+| Item | Example |
+|---|---|
+| Team ID | `A1B2C3D4E5` |
+| Pass Type ID | `pass.com.acme.loyalty` |
+| Certificate and private key | `pass.p12` |
+| `.p12` export password | (store it in a secrets manager) |
+| WWDR intermediate certificate | `AppleWWDRCAG4.cer` |
+
+**Security note:** The `.p12` file and its password can sign passes as your organization. Don't commit them to source control. Store them in a secrets manager or another secure location.
+
+### 2. Upload the files to Appian
+
+1. Create a document folder for the signing files. Turn off its security inheritance, and give access only to the people who manage the certificate and to the user the smart service runs as.
+2. Upload `pass.p12` and the WWDR `.cer` to that folder.
+3. Open the security of each uploaded document and confirm it inherits from the folder. A document with its own role map doesn't follow the folder's security.
+4. Upload your pass images as PNG documents to a separate folder. An icon is required, and Apple's documentation lists the image sizes.
+5. Create a separate folder for generated passes. Users need access to a pass to download it, so don't use the signing folder.
+6. On the smart service node's **Assignment** tab, choose **Run as whoever designed the process model**. With **Run as whoever started this process**, every user who starts the process would need access to your private key.
+7. Give the user the node runs as these permissions, unless that user is a system administrator:
+
+| Folder | Permission |
+| --- | --- |
+| Signing files | Viewer |
+| Pass images | Viewer |
+| Generated passes | Editor |
+
+System administrators can read every document, so test access with a user who isn't one. Users who download passes need Viewer on the generated passes folder, or on the individual pass.
+
+### 3. Store the password
+
+The plug-in reads the `.p12` password from [Third-Party Credentials](https://docs.appian.com/suite/help/26.6/admin-third-party-credentials.html), so it's never stored in your process model.
+
+1. In the Admin Console, go to **Integration > Third-Party Credentials** and click **CREATE**.
+2. In the **Identity** section, enter a **Name**. Appian generates the entry's **Key** from the name. You can't edit the key, and renaming the entry doesn't change it.
+3. In the **Plug-ins List** section, type `Apple Wallet Plugin` in the **Plug-ins** field and select it.
+4. In the **Credentials** section, click **Add field**, then:
+   1. Enter `Password` as the **Field name**. Its **Key** must be `password`, because that's the key the plug-in reads. Renaming a field doesn't change its key, so if the key is wrong, delete the field and add it again.
+   2. Enter the `.p12` password in the **Value** column.
+   3. Leave the option for individuals to set their own credentials off. The plug-in only reads the site-wide value.
+5. Click **SAVE**, then reopen the entry and copy its **Key**. This is the value for the smart service's `passwordScsKey` input.
+
+### If a run fails during setup
+
+| `errorTxt` contains | What to check |
+| --- | --- |
+| `is not registered to access secured values` | Either `passwordScsKey` doesn't match the entry's **Key**, or the plug-in isn't on the entry's **Plug-ins** list. The message is the same for both. |
+| `has no field named "password"` | The field's **Key** isn't `password`. |
+| `Icon image is required` | `passImages` has no `icon`. |
+
+### When the certificate expires
+
+1. Repeat part 1 to make a new `.p12`.
+2. Upload it as a new version of the existing `.p12` document, so your process models don't need to change.
+3. If the password changed, update the **Value** in the Third-Party Credentials entry.
+4. If the certificate's issuer changed, do the same for the WWDR document.
 
 ## Creating a pass
 
